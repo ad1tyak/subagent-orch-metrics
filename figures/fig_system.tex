@@ -1,0 +1,45 @@
+% Figure 1: one run of the testbed (orchestrator, N subagents, timed phases)
+% Requires: tikz with libraries arrows.meta, and figures/colors.tex
+\begin{tikzpicture}[
+  font=\sffamily,
+  box/.style={draw=edge, line width=0.6pt, rounded corners=4pt, align=center,
+              minimum height=1.15cm, inner sep=4pt},
+  arr/.style={-{Stealth[length=2.2mm,width=1.8mm]}, draw=edge, line width=0.6pt},
+  ret/.style={-{Stealth[length=2.2mm,width=1.8mm]}, draw=accent, line width=1.1pt},
+  phase/.style={font=\sffamily\footnotesize, text=quiet},
+]
+  % Boxes
+  \node[box, minimum width=2.7cm] (split) at (0,0)
+    {\textbf{Orchestrator}\\{\footnotesize\color{quiet} splits the question}};
+  \node[box, minimum width=3.2cm] (s1) at (4.1,1.55)
+    {\textbf{Subagent 1}\\{\footnotesize\color{quiet} searches, then returns}};
+  \node[box, minimum width=3.2cm] (s2) at (4.1,0)
+    {\textbf{Subagent 2}\\{\footnotesize\color{quiet} searches, then returns}};
+  \node[box, minimum width=3.2cm] (sn) at (4.1,-1.55)
+    {\textbf{Subagent $N$}\\{\footnotesize\color{quiet} searches, then returns}};
+  \node[box, minimum width=2.8cm] (read) at (8.2,0)
+    {\textbf{Orchestrator}\\{\footnotesize\color{quiet} reads the returns}};
+  \node[box, minimum width=2.2cm] (ans) at (11.5,0) {\textbf{Final answer}};
+
+  % Dispatch from the orchestrator to the subagents
+  \draw[arr] (split.east) -- ++(0.35,0) |- (s1.west);
+  \draw[arr] (split.east) -- (s2.west);
+  \draw[arr] (split.east) -- ++(0.35,0) |- (sn.west);
+
+  % Returns (the variable under study), drawn in the accent color
+  \draw[ret] (s1.east) -- ++(0.45,0) |- (read.west);
+  \draw[ret] (sn.east) -- ++(0.45,0) |- (read.west);
+  \draw[ret] (s2.east) -- (read.west);
+
+  % Answer, or send subagents out again
+  \draw[arr] (read.east) -- (ans.west);
+  \draw[arr] (read.south) -- ++(0,-2.1) -| (sn.south)
+    node[pos=0.25, above, font=\sffamily\footnotesize, text=quiet] {not enough: ask again};
+
+  % Timed phases
+  \draw[rule, line width=0.6pt] (-1.45,-3.25) -- (12.7,-3.25);
+  \node[phase] at (0,-3.6)    {Planning};
+  \node[phase] at (4.1,-3.6)  {Searching + writing returns};
+  \node[phase] at (8.2,-3.6)  {Waiting + reading returns};
+  \node[phase] at (11.5,-3.6) {Answering};
+\end{tikzpicture}

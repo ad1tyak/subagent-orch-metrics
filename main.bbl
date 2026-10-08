@@ -1,0 +1,108 @@
+\begin{thebibliography}{14}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Chen et~al.(2025)Chen, Ma, Zhuang, Nie, Zou, Liu, Green, Patel, Meng,
+  Su, Sharifymoghaddam, Li, Hong, Shi, Liu, Thakur, Zhang, Gao, Chen, and
+  Lin]{chen2025browsecompplus}
+Zijian Chen, Xueguang Ma, Shengyao Zhuang, Ping Nie, Kai Zou, Andrew Liu,
+  Joshua Green, Kshama Patel, Ruoxi Meng, Mingyi Su, Sahel Sharifymoghaddam,
+  Yanxi Li, Haoran Hong, Xinyu Shi, Xuye Liu, Nandan Thakur, Crystina Zhang,
+  Luyu Gao, Wenhu Chen, and Jimmy Lin.
+\newblock {BrowseComp-Plus}: A more fair and transparent evaluation benchmark
+  of deep-research agent.
+\newblock \emph{arXiv preprint arXiv:2508.06600}, 2025.
+\newblock URL \url{https://arxiv.org/abs/2508.06600}.
+
+\bibitem[{Anthropic}(2025)]{anthropic2025multiagent}
+{Anthropic}.
+\newblock How we built our multi-agent research system.
+\newblock
+  \url{https://www.anthropic.com/engineering/built-multi-agent-research-system},
+  2025.
+
+\bibitem[Yuan et~al.(2026)Yuan, Nayak, Kundu, and Talati]{yuan2026agentic}
+Yichao Yuan, Ankita Nayak, Souvik Kundu, and Nishil Talati.
+\newblock Agentic {AI} workload characterization.
+\newblock \emph{arXiv preprint arXiv:2605.26297}, 2026.
+\newblock URL \url{https://arxiv.org/abs/2605.26297}.
+
+\bibitem[Huang et~al.(2026)Huang, Wu, and Zhang]{huang2026pact}
+Chen Huang, Yuhao Wu, and Wenxuan Zhang.
+\newblock What should agents say? action-state communication for efficient
+  multi-agent systems.
+\newblock \emph{arXiv preprint arXiv:2606.05304}, 2026.
+\newblock URL \url{https://arxiv.org/abs/2606.05304}.
+
+\bibitem[{Authors of arXiv:2605.27787}(2026)]{librarian2026}
+{Authors of arXiv:2605.27787}.
+\newblock Long live the librarian! a persistent search sub-agent for
+  energy-efficient multi-agent software engineering systems.
+\newblock \emph{arXiv preprint arXiv:2605.27787}, 2026.
+\newblock URL \url{https://arxiv.org/abs/2605.27787}.
+
+\bibitem[Weinberger and Hozez(2026)]{weinberger2026token}
+Sarel Weinberger and Amir Hozez.
+\newblock Token reduction is not cost reduction.
+\newblock \emph{arXiv preprint arXiv:2607.12161}, 2026.
+\newblock URL \url{https://arxiv.org/abs/2607.12161}.
+
+\bibitem[Yoon et~al.(2026)Yoon, Liu, Wang, Wu, Xu, Kuang, Hwang, He, and
+  Yao]{yoon2026arcticswarm}
+Soyoung Yoon, Boyi Liu, Yite Wang, Ruofan Wu, Canwen Xu, Nikki~Lijing Kuang,
+  Seung-won Hwang, Yuxiong He, and Zhewei Yao.
+\newblock {ArcticSwarm}: Deferring early consensus in long-horizon multi-agent
+  research.
+\newblock \emph{arXiv preprint arXiv:2609.01870}, 2026.
+\newblock URL \url{https://arxiv.org/abs/2609.01870}.
+
+\bibitem[Zhang et~al.(2026)Zhang, Su, Chen, Lin, Xu, Du, Yang, An, Bing, and
+  Wang]{zhang2026argus}
+Zhen Zhang, Liangcai Su, Zhuo Chen, Xiang Lin, Haotian Xu, Simon~Shaolei Du,
+  Kaiyu Yang, Bo~An, Lidong Bing, and Xinyu Wang.
+\newblock Argus: Evidence assembly for scalable deep research agents.
+\newblock \emph{arXiv preprint arXiv:2605.16217}, 2026.
+\newblock URL \url{https://arxiv.org/abs/2605.16217}.
+
+\bibitem[Mao and Mirhoseini(2026)]{mao2026delm}
+Yuzhen Mao and Azalia Mirhoseini.
+\newblock Decentralized multi-agent systems with shared context.
+\newblock \emph{arXiv preprint arXiv:2606.10662}, 2026.
+\newblock URL \url{https://arxiv.org/abs/2606.10662}.
+
+\bibitem[Shi et~al.(2026)Shi, Zheng, and Lou]{shi2026lamas}
+Xi~Shi, Mengxin Zheng, and Qian Lou.
+\newblock Learning latency-aware orchestration for parallel multi-agent
+  systems.
+\newblock \emph{arXiv preprint arXiv:2601.10560}, 2026.
+\newblock URL \url{https://arxiv.org/abs/2601.10560}.
+
+\bibitem[{OpenAI}(2025{\natexlab{a}})]{openai2025browsecomp}
+{OpenAI}.
+\newblock {BrowseComp}: A simple yet challenging benchmark for browsing agents.
+\newblock \url{https://openai.com/index/browsecomp}, 2025{\natexlab{a}}.
+
+\bibitem[Kwon et~al.(2023)Kwon, Li, Zhuang, Sheng, Zheng, Yu, Gonzalez, Zhang,
+  and Stoica]{kwon2023vllm}
+Woosuk Kwon, Zhuohan Li, Siyuan Zhuang, Ying Sheng, Lianmin Zheng, Cody~Hao Yu,
+  Joseph~E. Gonzalez, Hao Zhang, and Ion Stoica.
+\newblock Efficient memory management for large language model serving with
+  {PagedAttention}.
+\newblock In \emph{Proceedings of the 29th Symposium on Operating Systems
+  Principles (SOSP)}, 2023.
+
+\bibitem[{OpenAI}(2025{\natexlab{b}})]{openai2025gptoss}
+{OpenAI}.
+\newblock Introducing gpt-oss.
+\newblock \url{https://openai.com/index/introducing-gpt-oss/},
+  2025{\natexlab{b}}.
+
+\bibitem[{Qwen Team}(2026)]{qwen2026qwen35}
+{Qwen Team}.
+\newblock {Qwen3.5}: Towards native multimodal agents.
+\newblock \url{https://qwen.ai/blog?id=qwen3.5}, 2026.
+
+\end{thebibliography}

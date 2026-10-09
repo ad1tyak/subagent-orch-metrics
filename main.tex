@@ -42,11 +42,6 @@
 \maketitle
 
 % =====================================================================
-\begin{abstract}
-Many AI systems now split a task across an orchestrator and several subagents that work in parallel and report back. What each subagent sends back, both how much and in what form, is the only channel between them, yet today it is chosen by rule of thumb. We will build an open testbed for multi-agent search on the BrowseComp-Plus benchmark~\citep{chen2025browsecompplus} and run a controlled study of six return formats, from short written summaries to raw documents, at three levels of parallelism. For every run we measure answer accuracy and break the end-to-end time into its parts: subagents writing their returns, the orchestrator reading them, waiting for the slowest subagent, and extra rounds when a return falls short. The result is a set of measured accuracy and latency trade-off curves and a practical guideline for what subagents should return.
-\end{abstract}
-
-% =====================================================================
 \section{Problem Statement}
 An orchestrator sends $N$ subagents out to search in parallel, and each sends back a result. We ask how the size and format of that result should be chosen to balance answer accuracy against end-to-end latency. Concretely:
 \begin{enumerate}
@@ -101,7 +96,7 @@ Recent work covers one piece each (Table~\ref{tab:related}).
 
 % =====================================================================
 \section{What We Are Building}
-This is a coding and measurement project. We train no models; we run existing open models and change only what subagents send back.
+We run existing open models and change only what subagents send back.
 \begin{itemize}
   \item \textbf{Testbed:} an orchestrator splits each question into subtasks, $N$ subagents search a fixed document corpus, and each returns its findings in one of six formats. The orchestrator then answers or sends subagents out again (Figure~\ref{fig:system}).
   \item \textbf{Benchmark:} BrowseComp-Plus~\citep{chen2025browsecompplus}, which pairs 830 hard research questions from BrowseComp~\citep{openai2025browsecomp} with a fixed corpus of about 100K documents.\footnote{\url{https://github.com/texttron/BrowseComp-Plus}} A fixed corpus makes search repeatable, and each question has labeled evidence documents.

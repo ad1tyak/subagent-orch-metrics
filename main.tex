@@ -180,37 +180,23 @@ Table~\ref{tab:labor} lists who leads each area. All four members share the pilo
   \centering\small
   \caption{Division of labor.}
   \label{tab:labor}
-  \begin{tabularx}{\linewidth}{@{}P{3.6cm}LL@{}}
+  \begin{tabularx}{\linewidth}{@{}P{2.2cm}LL@{}}
     \toprule
     \textbf{Member} & \textbf{Leads} & \textbf{Also helps with} \\
     \midrule
-    Aditya Kumar        & Agent harness and the six return formats & Prior work, writing \\
-    Anirudh Jagannath   & Model serving and timing instrumentation & Latency runs \\
-    Edward Edberg Halim & Evaluation pipeline and accuracy runs & Grading, evidence recall \\
-    Ethan Feiges        & Analysis, statistics and figures & Final report \\
+    Person 1 & Agent harness and the six return formats & Prior work, writing \\
+    Person 2 & Model serving and timing instrumentation & Latency runs \\
+    Person 3 & Evaluation pipeline and accuracy runs & Grading, evidence recall \\
+    Person 4 & Analysis, statistics and figures & Final report \\
     \bottomrule
   \end{tabularx}
 \end{table}
 
 \subsection{Milestones and Timeline}
-Figure~\ref{fig:timeline} shows the schedule. The pilot locks the design before the mid-term report, so the main runs and analysis finish before the final presentations.
-
-\begin{figure}[!htbp]
-  \centering
-  \resizebox{\linewidth}{!}{\input{figures/fig_timeline}}
-  \caption{Project timeline, October 8 to December 9, 2026. Bars are workstreams; diamonds are course deadlines, with the final report and code (blue) as the primary deliverable.}
-  \label{fig:timeline}
-\end{figure}
-
+Two checkpoints anchor the plan:
 \begin{itemize}
-  \item \textbf{Proposal (Oct 8):} this document and a 5-minute talk.
-  \item \textbf{Setup done (Oct 18):} models served, single-agent baseline reproduced on 50 questions, model choice made.
-  \item \textbf{Pilot done (Oct 31):} harness with all six formats and timing; 50 questions across all 18 configurations; design locked.
-  \item \textbf{Mid-term report (Nov 5):} completed and open tasks, pilot results, any problems and fixes, updated timeline, who did what.
-  \item \textbf{Main runs done (Nov 21):} accuracy and latency runs complete.
-  \item \textbf{Analysis done (Nov 30):} charts, paired tests and failure review; talk drafted. The Thanksgiving week is buffer.
-  \item \textbf{Final presentation (Dec 1 to 8):} 15-minute conference-style talk.
-  \item \textbf{Final report and code (Dec 9):} conference-style report, code with README, and released timed traces.
+  \item \textbf{By the mid-term report (Nov 5):} setup and single-agent baseline (Oct 9 to 18); testbed with all six return formats and per-phase timing (Oct 12 to 31); pilot across all 18 configurations to lock the design (Oct 26 to 31).
+  \item \textbf{By the final report (Dec 9):} accuracy and latency runs (Nov 6 to 21); analysis (Nov 16 to 30); final talk (Dec 1 to 8); report, code and timed traces released (Dec 9).
 \end{itemize}
 
 % =====================================================================

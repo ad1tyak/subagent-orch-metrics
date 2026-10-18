@@ -1,0 +1,37 @@
+# E3 pilot: 50 questions across all 18 configurations. Paths are relative to the repo root.
+name = "pilot"
+endpoints = "configs/endpoints.toml"
+questions = "data/questions.jsonl"   # {"qid", "question", "clues"} per line
+clues = "data/clues.json"            # {qid: [clue, ...]} from A4, used when a question has no clues field
+corpus = "data/corpus.jsonl"         # {"docid", "title", "text"} per line
+index = "data/bm25"                  # Pyserini index; remove to run BM25 in memory on a small corpus
+limit = 50
+mode = "multi"                       # "single" for the E2 baseline
+n_mode = "fixed"                     # "free" for the E5 check
+formats = ["short", "medium", "long", "claims", "quotes", "raw"]
+n_values = [1, 3, 6]
+seeds = [0]
+max_questions_in_flight = 8
+
+[roles]
+orchestrator = "gptoss-120b-vllm"
+subagent = "gptoss-20b-vllm"
+single = "gptoss-120b-vllm"
+
+[budgets]                            # return caps in tokens; C6 sets final values
+short = 200
+medium = 1000
+long = 3000
+claims = 800
+quotes = 2000
+raw = 8000
+
+[limits]
+max_steps = 15
+max_invalid_streak = 3
+max_extra_rounds = 1
+search_k = 5
+snippet_tokens = 512                 # match the BrowseComp-Plus reference searcher
+open_tokens = 1500
+call_max_tokens = 8192
+writing_reasoning_allowance = 1024

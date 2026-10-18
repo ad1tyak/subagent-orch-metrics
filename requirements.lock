@@ -1,0 +1,50 @@
+# Exact versions of the dev, data and analysis extras, tested with Python 3.14.2 (task A1).
+# Install: pip install -r requirements.lock && pip install -e . --no-deps
+# Regenerate after changing dependencies: pip freeze --exclude-editable > requirements.lock (then restore this header)
+# Pyserini (the bm25 extra) is not pinned yet: it needs Java 21 and has not been installed.
+annotated-types==0.8.0
+anyio==4.15.1
+certifi==2026.7.22
+charset-normalizer==3.5.2
+click==8.5.0
+contourpy==1.4.0
+cycler==0.12.1
+filelock==4.2.0
+fonttools==4.67.0
+fsspec==2026.9.0
+h11==0.16.0
+hf-xet==1.7.0
+httpcore==1.0.9
+httpcore2==2.13.1
+httpx==0.28.1
+httpx2==2.13.1
+huggingface_hub==2.2.0
+idna==3.20
+iniconfig==2.3.1
+jiter==0.17.0
+kiwisolver==1.5.1
+matplotlib==3.11.2
+numpy==2.5.4
+openai==3.33.0
+packaging==26.3
+pillow==13.0.0
+pluggy==1.7.0
+pyarrow==26.0.0
+pydantic==2.14.1
+pydantic_core==2.50.1
+Pygments==2.21.0
+pyparsing==3.3.3
+pytest==9.1.1
+python-dateutil==2.9.0.post0
+PyYAML==6.0.3
+regex==2026.9.29
+requests==2.34.2
+six==1.17.0
+sniffio==1.3.1
+tiktoken==0.14.0
+tokenizers==0.23.3
+tqdm==4.70.1
+truststore==0.10.5
+typing-inspection==0.4.4
+typing_extensions==4.16.0
+urllib3==2.8.0

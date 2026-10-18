@@ -1,0 +1,21 @@
+# E2 baseline: one agent searches and answers alone, on the pilot's 50 questions and search settings.
+name = "baseline"
+endpoints = "configs/endpoints.toml"
+questions = "data/questions.jsonl"
+corpus = "data/corpus.jsonl"
+index = "data/bm25"
+limit = 50
+mode = "single"
+seeds = [0]
+max_questions_in_flight = 8
+
+[roles]
+single = "gptoss-120b-vllm"
+
+[limits]                             # keep equal to pilot.toml so the comparison is fair
+max_steps = 15
+max_invalid_streak = 3
+search_k = 5
+snippet_tokens = 512
+open_tokens = 1500
+call_max_tokens = 8192

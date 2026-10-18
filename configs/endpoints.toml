@@ -1,0 +1,58 @@
+# Model endpoints. Any OpenAI-compatible server works: vLLM or SGLang on our own GPU,
+# a hosted provider, or a LiteLLM proxy in front of anything else.
+# Keys that are not harness settings go inside sampling, thinking_on or thinking_off and are sent as-is.
+# Run `python -m harness.smoke configs/endpoints.toml <name>` before using an endpoint.
+
+[endpoints.gptoss-120b-vllm]
+base_url = "http://gpu-node:8000/v1"
+api_key_env = "VLLM_API_KEY"          # name of the env var, never the key itself; "" if the server has no key
+model = "openai/gpt-oss-120b"
+tokenizer = "hf:openai/gpt-oss-120b"
+context_window = 131072
+max_concurrency = 32
+sampling = { temperature = 1.0, top_p = 1.0 }
+thinking_on = { reasoning_effort = "medium" }
+thinking_off = { reasoning_effort = "low" }    # gpt-oss has no full "off"
+
+[endpoints.gptoss-20b-vllm]
+base_url = "http://gpu-node:8001/v1"
+api_key_env = "VLLM_API_KEY"
+model = "openai/gpt-oss-20b"
+tokenizer = "hf:openai/gpt-oss-20b"
+context_window = 131072
+max_concurrency = 64
+sampling = { temperature = 1.0, top_p = 1.0 }
+thinking_on = { reasoning_effort = "medium" }
+thinking_off = { reasoning_effort = "low" }
+
+[endpoints.qwen35-27b-hosted]
+base_url = "https://api.provider.example/v1"
+api_key_env = "PROVIDER_API_KEY"
+model = "Qwen/Qwen3.5-27B"
+tokenizer = "hf:Qwen/Qwen3.5-27B"
+context_window = 131072
+max_concurrency = 16
+sampling = { temperature = 0.6, top_p = 0.95 }
+thinking_on = { extra_body = { chat_template_kwargs = { enable_thinking = true } } }
+thinking_off = { extra_body = { chat_template_kwargs = { enable_thinking = false } } }
+
+# Judges for `python -m harness.grade judge`. The official BrowseComp-Plus judge is Qwen3-32B on vLLM with
+# these settings (the judge always runs with thinking off); GPT-4.1 is their alternative, within 1% of it.
+[endpoints.qwen3-32b-judge]
+base_url = "http://gpu-node:8002/v1"
+api_key_env = "VLLM_API_KEY"
+model = "Qwen/Qwen3-32B"
+tokenizer = "hf:Qwen/Qwen3-32B"
+context_window = 32768
+max_concurrency = 32
+sampling = { temperature = 0.7, top_p = 0.8, top_k = 20 }
+thinking_off = { extra_body = { chat_template_kwargs = { enable_thinking = false } } }
+
+[endpoints.gpt41-judge]
+base_url = "https://api.openai.com/v1"
+api_key_env = "OPENAI_API_KEY"
+model = "gpt-4.1"
+tokenizer = "tiktoken:o200k_base"
+context_window = 1047576
+max_concurrency = 16
+max_tokens_param = "max_completion_tokens"

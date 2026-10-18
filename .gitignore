@@ -1,0 +1,19 @@
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+
+# Decrypted questions, the corpus and run outputs never go in git.
+data/
+runs/
+
+# LaTeX build output
+proposal/.build/
+proposal/.build.log
+proposal/*.aux
+proposal/*.log
+proposal/*.out
+proposal/*.fls
+proposal/*.fdb_latexmk
+proposal/*.synctex.gz
+proposal/*.blg

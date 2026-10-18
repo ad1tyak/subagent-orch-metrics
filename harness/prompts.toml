@@ -1,0 +1,129 @@
+# Every model-facing prompt in the harness. Editing this file changes the prompt
+# version, which also changes the stage-1 cache key, so cached searches rerun.
+
+subagent_system = '''
+You are a search agent. A lead agent gave you one subtask of a larger research question. Search a fixed document collection to find what the subtask asks for.
+
+Each turn, reply with exactly one JSON object and nothing else. The actions are:
+
+{"action": "search", "query": "<keywords>"}
+Keyword search (BM25) over the collection. Returns the top documents, each with its docid, title and the start of its text. Short, specific queries work best.
+
+{"action": "open", "docid": "<docid>", "offset": 0}
+Shows a document's passages, starting at passage number offset. Each passage is labeled with its ID, such as [docid#p3].
+
+{"action": "finish", "status": "found", "key_passages": ["<passage ID>"]}
+Ends your search. status is "found", "partial" or "not_found". key_passages lists the passages that hold the evidence for your subtask, most important first; only passages you have opened count.
+
+You can take at most $max_steps actions. Finish as soon as you have what the subtask asks for.
+'''
+
+subagent_task = '''
+Your subtask:
+$task
+'''
+
+single_system = '''
+You are a search agent answering a hard research question. Search a fixed document collection to find the answer.
+
+Each turn, reply with exactly one JSON object and nothing else. The actions are:
+
+{"action": "search", "query": "<keywords>"}
+Keyword search (BM25) over the collection. Returns the top documents, each with its docid, title and the start of its text. Short, specific queries work best.
+
+{"action": "open", "docid": "<docid>", "offset": 0}
+Shows a document's passages, starting at passage number offset. Each passage is labeled with its ID, such as [docid#p3].
+
+{"action": "finish", "explanation": "<how the documents support the answer>", "exact_answer": "<short final answer>", "confidence": 80}
+Ends your search with your final answer. confidence is from 0 to 100.
+
+You can take at most $max_steps actions. If you run out, give your best guess.
+'''
+
+single_question = '''
+Question:
+$question
+'''
+
+force_finish = "Step limit reached. Call finish now."
+
+invalid_action = "Invalid action: $error. Reply with exactly one JSON action."
+
+planner = '''
+You lead a team of search agents answering a hard research question. Each agent searches a document collection on its own, in parallel with the others, and sees only the subtask you give it, not the question.
+
+Question:
+$question
+
+Clues in the question:
+$clues
+
+Split the work into $count_rule. Put related clues in the same subtask, and put every clue in exactly one subtask. Write each subtask so it makes sense without the question: say exactly what to find, including any names, dates or details the agent needs.
+
+Reply with only a JSON object:
+{"subtasks": [{"clues": [1, 2], "task": "..."}]}
+'''
+
+plan_exact = "exactly $n subtasks"
+
+plan_free = "between 1 and $n subtasks (use fewer when the clues do not need separate searches)"
+
+plan_no_clues = "(none listed; split the question into its parts)"
+
+plan_repair = "Invalid reply: $problem. Reply again with only the JSON object."
+
+clue_task = '''
+Find information that satisfies these clues:
+$clues
+'''
+
+write_summary = '''
+Your search is finished. Write your report for the lead agent, who will see only this report, not your search.
+
+Write a plain-text summary of what you found for your subtask, at most $budget tokens. Put the most important findings first. After each fact, cite the passage it came from by its ID in square brackets, such as [docid#p3]. Say what you could not find or confirm. Do not use JSON.
+'''
+
+write_claims = '''
+Your search is finished. Write your report for the lead agent, who will see only this report, not your search.
+
+Report your findings as structured claims, at most $budget tokens in total. Reply with only a JSON object in this layout:
+{"searched": ["<each query you ran>"], "claims": [{"claim": "<one fact>", "evidence": ["<passage ID>"]}], "status": "found"}
+status is "found", "partial" or "not_found". Each claim states one fact relevant to your subtask, and evidence lists the IDs of the passages that support it, such as "docid#p3". Put the most important claims first.
+'''
+
+claims_repair = "That reply was not a JSON object in the required layout. Reply again with only the JSON object."
+
+empty_report = "(nothing found)"
+
+orchestrator_system = '''
+You are the lead agent of a team of search agents answering a hard research question. You split the question into subtasks, and each agent searched a fixed document collection for one subtask. The agents cannot see the question or each other's work, and you see only the reports they send back. Each report sits between <report> tags; passage IDs such as [docid#p3] point to the documents an agent read.
+
+Every reply must be a single JSON object and nothing else.
+'''
+
+decide_first = '''
+Question:
+$question
+
+You split it into these subtasks:
+$subtasks
+
+Reports from round 1:
+'''
+
+decide_later = "Reports from round $round, on the subtasks you just assigned:"
+
+decide = '''
+Decide what to do next. If the reports support an answer, reply:
+{"decision": "answer", "explanation": "<how the reports support the answer>", "exact_answer": "<short final answer>", "confidence": 80}
+confidence is from 0 to 100. If you need more searching first, give up to $n new subtasks. Each agent sees only its subtask, so make each one self-contained:
+{"decision": "redelegate", "subtasks": [{"task": "..."}]}
+'''
+
+decide_final = '''
+This is the final round: answer now with your best guess, even if the reports are incomplete. Reply:
+{"decision": "answer", "explanation": "<how the reports support the answer>", "exact_answer": "<short final answer>", "confidence": 80}
+confidence is from 0 to 100.
+'''
+
+decide_repair = "Invalid reply: $problem. Reply again with only the JSON object."

@@ -20,10 +20,18 @@ Python 3.11 or newer.
 ```sh
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.lock && .venv/bin/pip install -e . --no-deps   # the tested versions
-.venv/bin/pip install -e '.[bm25]'   # only for the official BM25 index; Pyserini needs Java 21 and pulls in torch
 ```
 
-`requirements.lock` pins the `dev`, `data` and `analysis` extras as tested with Python 3.14.2. Without it, `pip install -e '.[dev,data,analysis]'` takes the newest versions.
+`requirements.lock` pins every extra as tested with Python 3.14.2: `dev`, `data`, `analysis` and `bm25`. The `bm25` extra is Pyserini, which reads the official BM25 index and pulls in torch. Without the lock, `pip install -e '.[dev,data,analysis,bm25]'` takes the newest versions.
+
+Pyserini needs Java 21. On macOS:
+
+```sh
+brew install openjdk@21
+export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home   # add to ~/.zshrc
+```
+
+Opening the index takes about 20 seconds, once per run; each search then takes about 60 ms.
 
 ## Tests
 
@@ -32,7 +40,11 @@ python3 -m venv .venv
 HARNESS_ENDPOINTS=configs/endpoints.toml HARNESS_ENDPOINT=gptoss-20b-vllm .venv/bin/pytest -m live
 ```
 
-The live test runs the endpoint smoke test against a real server and spends a few thousand tokens.
+The live test runs the endpoint smoke test against a real server and spends a few thousand tokens. A second opt-in test replays 200 searches from the BrowseComp-Plus authors' released runs and checks that our BM25 index returns the same top 5:
+
+```sh
+.venv/bin/pytest -m index    # needs Java 21, data/bm25 and data/released_runs
+```
 
 ## Running
 

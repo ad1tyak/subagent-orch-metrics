@@ -1,13 +1,14 @@
 # Task checklist
 
-Status of every task in `tasks.md`, as of Oct 17, 2026. Use it to check what is done and to pick up the next step.
+Status of every task in `tasks.md`, as of Oct 18, 2026. Use it to check what is done and to pick up the next step.
 
 ## Where things stand
 
 - **All the code that can be written without a model is written and tested offline.** That covers the harness (B1 to B11), the formats (C1 to C5, C7), clue extraction (A4), grading (D1), evidence recall and analysis (D2, D3) and calibration (C6). All 128 offline tests pass against a mock model server.
 - **The data is downloaded and decrypted** into `data/` (about 5.6 GB, gitignored): 830 questions, their labels, 100,195 documents, the BM25 index and the two released runs.
-- **No model has been called yet.** Everything from here on needs a model endpoint (A3). The order is in [What to do next](#what-to-do-next).
-- **Nothing since the proposal move is committed.** `harness/`, `tests/`, `configs/`, `docs/`, `README.md`, `pyproject.toml`, `requirements.lock` and `.gitignore` are untracked; the move of the proposal into `proposal/` is staged.
+- **No model has been called yet.** Everything left needs a model endpoint (A3). The order is in [What to do next](#what-to-do-next).
+- **The official search engine works.** Pyserini with Java 21 reproduces the authors' BM25 results exactly: 500 of 500 replayed searches gave the same top 5 in the same order. The whole pipeline has also run on real questions, documents and the index, with the mock model standing in for the LLMs.
+- **Everything is committed, and nothing is pushed.** `18fccc2` added the harness; the commit after it added the search-engine setup.
 
 Status labels:
 
@@ -20,7 +21,9 @@ Status labels:
 ```sh
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.lock && .venv/bin/pip install -e . --no-deps
-.venv/bin/pytest                             # expect: 128 passed, 1 deselected (the live test)
+.venv/bin/pytest                             # expect: 128 passed, 2 deselected (the live and index tests)
+export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
+.venv/bin/pytest -m index                    # expect: 1 passed (our BM25 matches the released runs)
 .venv/bin/python -m harness.data             # expect: every file "exists; skipping"
 .venv/bin/python -m harness.calibrate        # the released-run statistics in C6 below
 ```
@@ -33,7 +36,8 @@ python3 -m venv .venv
 - [x] Package and extras in `pyproject.toml`: `dev`, `data`, `analysis`, and `bm25` for Pyserini.
 - [x] Pinned versions in `requirements.lock`, tested with Python 3.14.2.
 - [x] One test command: `.venv/bin/pytest`.
-- [ ] Next: commit the harness. Pin Pyserini in `requirements.lock` once it is installed (B3).
+- [x] Pyserini and its dependencies (torch among them) are pinned in `requirements.lock` too.
+- [ ] Next: push the commits when the team is ready.
 
 ### A2 Data setup: Done
 
@@ -76,7 +80,7 @@ Every module is tested offline against the mock server (`tests/mock_llm.py`) and
 | --- | --- | --- | --- |
 | B1 Shared interfaces | Done | `config.py`, `records.py`, `configs/pilot.toml` | `test_config.py` |
 | B2 Model client | Done | `llm.py`, `tokens.py` | `test_llm.py` |
-| B3 Search tool | Done, but the Pyserini path is untested | `search.py` | `test_search.py` (in-memory BM25 only) |
+| B3 Search tool | Done | `search.py` | `test_search.py`; `test_index.py` (opt-in, the official index) |
 | B4 Planner | Done | `planner.py` | `test_planner.py` |
 | B5 Subagent search loop | Done | `subagent.py`, `parsing.py` | `test_subagent.py` |
 | B6 Orchestrator decision | Done | `orchestrator.py` | `test_orchestrator.py` |
@@ -88,10 +92,15 @@ Every module is tested offline against the mock server (`tests/mock_llm.py`) and
 
 Left to do:
 
-- [ ] **B3:** install Java 21 and the bm25 extra: `.venv/bin/pip install -e '.[bm25]'`.
-  - Pyserini needs Python 3.12 or newer and pulls in torch.
-  - The Pyserini path in `search.py` has never run. The in-memory BM25 is meant for small corpora, not 100,195 documents.
-  - Check our retrieval against theirs. The released runs record each search query (in plain text) and the docids it returned, so our top 5 should match for the same query.
+B3, the official index, is done on this machine:
+
+- [x] Java 21 is installed with `brew install openjdk@21`, and `JAVA_HOME` must point to it (see `README.md`). Pyserini 2.4.0 is installed from the bm25 extra and runs on Python 3.14.
+- [x] The index opens in about 20 s (mostly loading torch) and holds all 100,195 documents; a search takes about 60 ms.
+- [x] Our results match the authors'. 500 searches sampled from both released runs return the same top 5 in the same order. `tests/test_index.py` replays 200 of them: `pytest -m index`.
+- [x] The full pipeline ran on real data with the mock model standing in: 3 questions × 6 formats × N of 1 and 3, giving 36 results. `check` passed, and grading, analysis and calibration all ran.
+  - Evidence recall came out at 0 because the mock sends placeholder queries.
+  - Searching each evidence document's title finds 14 of 16, so the label and index docids do match.
+- [ ] Everyone running the harness needs Java 21 and `JAVA_HOME` set as above.
 - [ ] **B9:** on the first real run, `python -m harness.check runs/<name>` must report no mismatches. Look at its counts of missing cached and reasoning tokens.
 
 ## C. Return formats
@@ -171,7 +180,7 @@ GPT-5 averages 23.2 searches, which matches the dataset card. One agent reads ab
 - [ ] Settle the success target in F1. If it changes, edit `TARGET` in `harness/analyze.py`.
 - [ ] Run it on the pilot, then on the main runs, for the results section.
 
-## E. Experiments: Not started (need A3; the pilot also needs A4 and B3)
+## E. Experiments: Not started (need A3; the pilot also needs A4)
 
 Commands are ready for each. A run directory is named by the config's `name`. A run resumes when restarted; add `--retry-failed` to rerun failed questions.
 
@@ -212,16 +221,13 @@ Commands are ready for each. A run directory is named by the config's `name`. A 
 2. **Clues (A4).**
    - Run 30, review them, then run all 830.
    - Settle on N = 6 from the chart.
-3. **Pyserini (B3).**
-   - Install Java 21 and the bm25 extra.
-   - Check our top 5 against the released runs' searches.
-4. **Integration (E1).** Run 5 questions through all 18 configurations and run `check`.
-5. **Judge (D1).**
+3. **Integration (E1).** Run 5 questions through all 18 configurations and run `check`.
+4. **Judge (D1).**
    - Choose the judge, run the smoke test on it, and grade E1.
    - Hand-check 30 judgments.
    - Cross-check once with `evaluate_run.py`.
-6. **Baseline and pilot (E2, E3).** Then calibrate (C6) and lock the budgets.
-7. **F1.** Update the proposal before the mid-term.
+5. **Baseline and pilot (E2, E3).** Then calibrate (C6) and lock the budgets.
+6. **F1.** Update the proposal before the mid-term.
 
 Decisions still open:
 

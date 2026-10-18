@@ -28,5 +28,8 @@ harness = ["prompts.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-m 'not live'"
-markers = ["live: calls a real model endpoint and spends tokens"]
+addopts = "-m 'not live and not index'"
+markers = [
+  "live: calls a real model endpoint and spends tokens",
+  "index: searches the official BM25 index; needs the bm25 extra, Java 21 and data/",
+]

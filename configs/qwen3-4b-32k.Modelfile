@@ -1,0 +1,7 @@
+# Qwen3-4B with a 32k context, for local plumbing tests on a 16 GB Mac (endpoint qwen3-4b-ollama).
+# Ollama gives machines under 24 GB a 4k context and cuts longer prompts without warning.
+# qwen3:4b-q4_K_M is the original hybrid release, which can switch thinking off. The plain qwen3:4b tag is
+# the 2507 thinking release: with thinking "off" it still reasons, inside the visible reply.
+#   ollama pull qwen3:4b-q4_K_M && ollama create qwen3-4b-32k -f configs/qwen3-4b-32k.Modelfile
+FROM qwen3:4b-q4_K_M
+PARAMETER num_ctx 32768

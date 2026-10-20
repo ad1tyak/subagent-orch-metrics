@@ -36,6 +36,19 @@ sampling = { temperature = 0.6, top_p = 0.95 }
 thinking_on = { extra_body = { chat_template_kwargs = { enable_thinking = true } } }
 thinking_off = { extra_body = { chat_template_kwargs = { enable_thinking = false } } }
 
+# Local plumbing tests only, not a study model: Qwen3-4B in Ollama on a 16 GB Mac.
+# Build the model with configs/qwen3-4b-32k.Modelfile; see README "Local test with Ollama".
+[endpoints.qwen3-4b-ollama]
+base_url = "http://localhost:11434/v1"
+model = "qwen3-4b-32k"
+tokenizer = "hf:Qwen/Qwen3-4B"
+context_window = 32768                # must match num_ctx in the Modelfile
+max_concurrency = 1                   # one slot: requests queue instead of competing for memory
+timeout_s = 900
+sampling = { temperature = 0.6, top_p = 0.95 }   # Qwen3's recommended thinking settings
+thinking_on = { reasoning_effort = "medium" }
+thinking_off = { reasoning_effort = "none" }
+
 # Judges for `python -m harness.grade judge`. The official BrowseComp-Plus judge is Qwen3-32B on vLLM with
 # these settings (the judge always runs with thinking off); GPT-4.1 is their alternative, within 1% of it.
 [endpoints.qwen3-32b-judge]

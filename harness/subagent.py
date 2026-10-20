@@ -77,6 +77,8 @@ async def run_search(client, endpoint: str, session, *, task: str, limits, seed:
         try:
             action = parse_action(reply.text, single)
             if action["action"] == "finish":
+                if not forced and not any(a["action"] == "search" for a in trajectory.actions):
+                    raise ValueError("search the collection before you finish")
                 trajectory.actions.append(action)
                 _finish(trajectory, action, session)
                 break

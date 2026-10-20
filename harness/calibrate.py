@@ -114,7 +114,7 @@ def run_report(run_dir: Path) -> str:
     for (fmt, n), totals in sorted(returns.items(), key=lambda kv: (kv[0][1], FORMATS.index(kv[0][0]))):
         lines.append(describe(f"total return per question {fmt} N={n}", totals))
 
-    suggested = {fmt: round_up(percentile(values, 0.9)) for fmt, values in (("raw", seen), ("quotes", flagged)) if values}
+    suggested = {fmt: round_up(percentile(values, 0.9)) for fmt, values in (("raw", seen), ("quotes", flagged)) if any(values)}
     if suggested:
         lines.append("\nSuggested caps, the 90th percentile of the uncapped size: "
                      + ", ".join(f"{fmt} {cap} (now {budgets[fmt]})" for fmt, cap in suggested.items()))

@@ -1,0 +1,39 @@
+# Local single pass: one question through every configuration with Qwen3-4B in Ollama, to check the plumbing.
+# Not part of the study. Clues come from: python -m harness.clues configs/endpoints.toml qwen3-4b-ollama
+#   --limit 1 --review 1 --out data/local/clues.json   (kept apart from the real data/clues.json)
+name = "local"
+endpoints = "configs/endpoints.toml"
+questions = "data/questions.jsonl"
+clues = "data/local/clues.json"
+corpus = "data/corpus.jsonl"
+index = "data/bm25"
+limit = 1
+mode = "multi"
+n_mode = "fixed"
+formats = ["short", "medium", "long", "claims", "quotes", "raw"]
+n_values = [1, 3]
+seeds = [0]
+max_questions_in_flight = 1
+
+[roles]
+orchestrator = "qwen3-4b-ollama"
+subagent = "qwen3-4b-ollama"
+single = "qwen3-4b-ollama"
+
+[budgets]                            # same as pilot.toml
+short = 200
+medium = 1000
+long = 3000
+claims = 800
+quotes = 2000
+raw = 8000
+
+[limits]                             # same as pilot.toml except call_max_tokens
+max_steps = 15
+max_invalid_streak = 3
+max_extra_rounds = 1
+search_k = 5
+snippet_tokens = 512
+open_tokens = 1500
+call_max_tokens = 4096               # the reserve per reply; 8192 would leave a 32k context only a few steps
+writing_reasoning_allowance = 1024

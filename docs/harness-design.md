@@ -1,6 +1,6 @@
 # Agent Harness Design
 
-Oct 17, 2026 · Covers tasks B1 to B11 and the harness side of C1 to C7 in `tasks.md` · Updated to match the first implementation in `harness/`
+Oct 18, 2026 · Covers tasks B1 to B11 and the harness side of C1 to C7 in `tasks.md` · Updated after the first end-to-end run on a local model
 
 ## 1. What the harness does
 
@@ -54,6 +54,7 @@ Every model call uses the OpenAI Python SDK pointed at a `base_url`:
 | Self-hosted vLLM or SGLang on our own GPU | `base_url = "http://<host>:8000/v1"` | Start vLLM with `--enable-prompt-tokens-details` so cached tokens are reported, and with the model's reasoning parser so thinking text comes back separately |
 | Hosted open-model providers (for example Together, Fireworks, DeepInfra, OpenRouter, Groq) | The provider's OpenAI-compatible URL and key | Which usage fields they fill (cached and reasoning tokens vary), and whether `seed` is honored |
 | Closed-model APIs (OpenAI; Gemini and others through their OpenAI-compatible endpoints) | The provider's URL and key | Reasoning text is often hidden while reasoning tokens are still reported |
+| Ollama on a laptop, for plumbing tests only | `base_url = "http://localhost:11434/v1"` | Set `num_ctx` in a Modelfile, because machines under 24 GB get a 4k context and longer prompts are cut silently. Reasoning tokens are not reported, so they are estimated. Use a model whose thinking can be turned off |
 | Anything without an OpenAI-compatible API | A LiteLLM proxy in front of it | Nothing changes in the harness |
 
 Each role (orchestrator, subagent, single-agent baseline) maps to a named endpoint. The orchestrator can run on a large model and the subagents on a small one, on different backends if needed.
@@ -110,7 +111,7 @@ Visible output tokens are `output_tokens - reasoning_tokens`.
 `python -m harness.smoke configs/endpoints.toml <endpoint> > runs/<run>/smoke-<endpoint>.json` runs before any endpoint is used, and its JSON report is kept in the run folder:
 
 1. A plain call returns input and output token counts.
-2. The same long prompt sent twice: is cached input reported on the second call?
+2. The same long prompt sent twice: is cached input reported on the second call, and is the input still counted in full?
 3. Thinking on and then off: does the reasoning count change, and is it reported or estimated?
 4. The same seed twice at the configured temperature: is the output identical?
 5. The local token count of a prompt against the reported input count. The gap is chat-template overhead; a large or varying gap means the `tokenizer` setting is wrong.
@@ -147,7 +148,7 @@ harness/
   calibrate.py     # typical sizes from the released runs and our runs, suggested caps (C6)
   prompts.py       # load and render the templates; prompt version
   prompts.toml     # every prompt the harness models see (clue and judge prompts live in their modules)
-configs/           # endpoints.toml (including the judges), pilot.toml
+configs/           # endpoints.toml (including the judges), pilot.toml, baseline.toml, local.toml and its Ollama Modelfile
 tests/             # offline tests, the mock server and the tiny-corpus fixture
 docs/              # tasks.md, checklist.md and this design
 proposal/          # the LaTeX proposal
@@ -260,6 +261,7 @@ Actions are one JSON object per turn (see the decisions in section 8):
 ```
 
 - The parser takes the first JSON object in the visible text, so prose and code fences around it are fine. Anything invalid (no JSON, unknown action, missing field, unknown docid) returns an error message as the observation and counts as an invalid step.
+- A `finish` before any `search` is invalid too, unless the harness forced it. The prompt also says the answer comes from the documents. Both were added after a small model treated its subtask as reading comprehension and finished without searching.
 - At `max_steps` the harness sends "Step limit reached. Call finish now." If the reply is still not a valid `finish`, the subagent ends with no flagged passages and status `step_limit`.
 - `max_invalid_streak` (3) invalid actions in a row end the search with status `invalid_actions`.
 - If the next call would not fit (the last call's input and output, plus the newest observation, plus `call_max_tokens`, over the context window), the harness forces `finish` the same way; a reply that still is not `finish` ends with status `context_limit`.
@@ -288,11 +290,13 @@ Common rules (C1):
 | # | Format | Model call | Content | Starting cap | If something goes wrong | Delivered docs (C7) |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 to 3 | Short, medium, long summary | Yes | Prose with citations | 200 / 1,000 / 3,000 | Over the cap: truncate at the cap and set `hit_cap` | Docs of cited passages |
-| 4 | Structured claims | Yes | JSON following PACT: queries searched, claims each with evidence passage IDs, status | 800 | Invalid JSON: one repair call; still invalid, deliver the raw text with `valid = false` | Docs of evidence passages |
+| 4 | Structured claims | Yes | JSON following PACT: queries searched, claims each with evidence passage IDs, status. Evidence IDs the subagent never saw are removed, and the status is the search's own | 800 | Invalid JSON: one repair call; still invalid, deliver the raw text with `valid = false` | Docs of evidence passages |
 | 5 | Extracted quotes | No | Flagged passages in flag order, each with its ID | 2,000 | None flagged: use the seen passages that score highest against the subtask under BM25. Over the cap: drop from the end | Docs of included passages |
 | 6 | Raw documents | No | Every passage the subagent opened, grouped by document in the order opened | 8,000 | Over the cap: drop from the end | Docs with any included text |
 
 For summaries and claims, delivered docs come from citations, so they undercount evidence that a summary paraphrases without citing. C7 should note this when evidence recall is compared across formats.
+
+Claims are cleaned because their evidence is structured: in the local run, a subagent that opened nothing cited two passage IDs it made up, and the orchestrator answered from them at 80% confidence. Summaries are prose, so unseen IDs stay in their text, but they never count as delivered docs.
 
 For reasoning models the output limit covers thinking plus visible text. The writing call's limit is therefore the cap plus `writing_reasoning_allowance`, and the cap is enforced on the visible text afterward. `hit_cap` shows C2 how often the cap binds.
 
@@ -432,7 +436,7 @@ Each step is tested before the next starts. The mock backend arrives in step 2, 
 | 7 | B8, B9, B10 | Stage-1 cache, accounting, runner, `check` | One question runs through all 18 configurations offline; stage 1 runs once; invariants hold; kill-and-resume works | Oct 28 |
 | 8 | E1 | 5 real questions × 18 configurations | No errors, `check` passes, and return sizes fall in the expected range for each format | Oct 29 |
 
-**Status (Oct 17):** the code for steps 1 to 7 is written and passes the offline tests. What remains of those steps needs real endpoints and data: pinning the environment, the smoke test on the chosen endpoint, real queries against the index, a person reading one real trajectory, and one real question end to end. Step 8 is next after that.
+**Status (Oct 18):** the code for steps 1 to 7 is written and passes the offline tests (130). The environment is pinned, and our BM25 matches the official runs on 500 of 500 replayed searches. One real question has run end to end through all 12 configurations at N = 1 and 3 on Qwen3-4B under Ollama, with every trajectory read; it found three bugs, now fixed (sections 4.5, 4.6 and `calibrate`). A 4B model is too weak for accuracy numbers: its subagents searched once or twice and never opened a document. What remains is the smoke test on the study's endpoint, then step 8.
 
 E2 (baseline) and E3 (pilot) follow before the mid-term. `tasks.md` allows B8 to slip past the mid-term. Without it, the pipeline reruns stage 1 for each format, which costs about six times the search tokens and loses the guarantee that all formats share the same searches, so B8 is worth keeping if at all possible.
 
@@ -450,8 +454,8 @@ The mock backend (`tests/mock_llm.py`) is the real OpenAI SDK with an `httpx2.Mo
 | Model client | Usage shaped like OpenAI, vLLM with and without prompt details, and a provider with no cached or reasoning fields all map to the right record and sources. Reasoning is estimated from text when not reported. Missing usage fails loudly. Request bodies merge config correctly. A 429 followed by a 200 succeeds after one retry and gives one record. A persistent 500 raises after the retries. Requests in flight never exceed `max_concurrency`. A missing API key variable is an error. |
 | Search | Paragraphs merge and split into 80 to 250-word passages. Passage IDs are identical across two loads. Search is deterministic and finds the answer document. `open` respects the cap and pages correctly, and rejects unknown docids and bad offsets. Retrieved, opened and seen are recorded. |
 | Planner | Too many, too few and malformed outputs are repaired, then fixed by merging or splitting. Malformed twice falls back to even clue groups. Fewer clues than N sets `actual_n`. Free mode accepts fewer subtasks. N = 1 makes no call. |
-| Subagent loop | A valid run searches, opens and finishes. The step limit forces a finish, and so do three invalid actions in a row and a full context. A single invalid action gets feedback and the search continues. Unseen flagged IDs are dropped. JSON inside prose and code fences parses. Single-agent mode needs an answer to finish. |
-| Formats | Quotes give golden output with no model call, and fall back to BM25 ranking when nothing is flagged. Raw groups by document in opened order. Summaries write with thinking off and are truncated at the cap. Claims are compacted, cited, trimmed from the end to fit, repaired once, and delivered raw and flagged if still invalid. Every format shares the wrapper and respects its cap. |
+| Subagent loop | A valid run searches, opens and finishes. The step limit forces a finish, and so do three invalid actions in a row and a full context. A single invalid action gets feedback and the search continues. Finishing before any search is invalid. Unseen flagged IDs are dropped. JSON inside prose and code fences parses. Single-agent mode needs an answer to finish. |
+| Formats | Quotes give golden output with no model call, and fall back to BM25 ranking when nothing is flagged. Raw groups by document in opened order. Summaries write with thinking off and are truncated at the cap. Claims are compacted, cited, trimmed from the end to fit, repaired once, and delivered raw and flagged if still invalid. They keep only seen evidence and take the search's status. Every format shares the wrapper and respects its cap. |
 | Orchestrator | Both decision types parse; unusable replies raise. The last round rejects re-delegation. BrowseComp rendering is correct. Reports are trimmed to equal shares only when the context would overflow. One bad reply is repaired; two give a failed decision. |
 | Pipeline, runner and check | One question runs through all 18 configurations and `check` passes. With N = 1 every format finds the answer. Stage 1 runs once per question, N and seed, counted as mock requests. No search-phase request contains a format prompt. The six formats share one stage-1 key and identical round-1 searches, and only written formats spend writing tokens. A finished run resumes with no requests. A changed config cannot reuse a run folder. Re-delegated calls land only in `extra_rounds`, the last round forces an answer, and phase sums match the call records. Failures write an error file, are skipped on rerun, and succeed with `--retry-failed`. An interrupted write leaves no result file. Single-agent mode answers. `check` catches tampered totals. |
 | Smoke test | Against the mock, it reports token counts, cached tokens, reported or estimated reasoning, seed repeatability and template overhead. |
@@ -461,7 +465,7 @@ The mock backend (`tests/mock_llm.py`) is the real OpenAI SDK with an `httpx2.Mo
 These are opt-in, because they spend tokens: `HARNESS_ENDPOINTS=configs/endpoints.toml HARNESS_ENDPOINT=<name> pytest -m live`. Only the first is automated so far.
 
 1. The smoke test on each endpoint (section 3).
-2. One real question in one configuration, with a person reading the full trace.
+2. One real question with a person reading the full trace. Done on the local 4B model across all 12 configurations (`configs/local.toml`); repeat on the study's endpoint.
 3. E1: 5 questions × 18 configurations.
 4. Backend swap: the same 5 questions in one configuration on two backends, for example a hosted API and vLLM. The harness must run unchanged on both. Token counts will differ somewhat because providers apply chat templates differently, which is why a study never mixes backends.
 
@@ -509,6 +513,8 @@ The harness needs an answer to each of these to start. Each is a proposal and ca
 | Rate limits or a preempted GPU job interrupt a run | Per-endpoint concurrency caps, backoff, one file per question, and resume |
 | Long returns at N = 6 plus an extra round approach the context window | Caps sized to fit, plus a trimming guard that flags any overflow |
 | Pyserini needs Java 21 | Part of the A1 environment setup |
+| A weak model gives up after one or two searches, so every format looks equally bad | Use the study's models for any number that counts; check in E1 that subagents open documents and that recall is above zero before the pilot |
+| A server silently cuts long prompts (Ollama's default context) | Set the context explicitly; the smoke test's repeat check and `context_window` in the endpoint config must agree |
 | Released traces contain decrypted questions | Keep `data/` and `runs/` out of git, and check the BrowseComp-Plus terms before the F5 release |
 
 ## 10. Not building now

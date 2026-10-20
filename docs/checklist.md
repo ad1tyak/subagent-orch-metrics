@@ -4,11 +4,11 @@ Status of every task in `tasks.md`, as of Oct 18, 2026. Use it to check what is 
 
 ## Where things stand
 
-- **All the code that can be written without a model is written and tested offline.** That covers the harness (B1 to B11), the formats (C1 to C5, C7), clue extraction (A4), grading (D1), evidence recall and analysis (D2, D3) and calibration (C6). All 128 offline tests pass against a mock model server.
+- **All the code that can be written without a model is written and tested offline.** That covers the harness (B1 to B11), the formats (C1 to C5, C7), clue extraction (A4), grading (D1), evidence recall and analysis (D2, D3) and calibration (C6). All 130 offline tests pass against a mock model server.
 - **The data is downloaded and decrypted** into `data/` (about 5.6 GB, gitignored): 830 questions, their labels, 100,195 documents, the BM25 index and the two released runs.
-- **No model has been called yet.** Everything left needs a model endpoint (A3). The order is in [What to do next](#what-to-do-next).
+- **The whole pipeline has run once on a local model.** Qwen3-4B on Ollama took one question through all 12 configurations at N = 1 and 3, then check, grading, analysis and calibration (see A3). The 4B results only test the plumbing. Everything left needs a real model endpoint (A3). The order is in [What to do next](#what-to-do-next).
 - **The official search engine works.** Pyserini with Java 21 reproduces the authors' BM25 results exactly: 500 of 500 replayed searches gave the same top 5 in the same order. The whole pipeline has also run on real questions, documents and the index, with the mock model standing in for the LLMs.
-- **Everything is committed, and nothing is pushed.** `18fccc2` added the harness; the commit after it added the search-engine setup.
+- **Committed through the local-Ollama plumbing test.** `18fccc2` added the harness and `c203863` the search-engine setup.
 
 Status labels:
 
@@ -21,7 +21,7 @@ Status labels:
 ```sh
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.lock && .venv/bin/pip install -e . --no-deps
-.venv/bin/pytest                             # expect: 128 passed, 2 deselected (the live and index tests)
+.venv/bin/pytest                             # expect: 130 passed, 2 deselected (the live and index tests)
 export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 .venv/bin/pytest -m index                    # expect: 1 passed (our BM25 matches the released runs)
 .venv/bin/python -m harness.data             # expect: every file "exists; skipping"
@@ -62,6 +62,17 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
 - [ ] Run the smoke test and keep the report with the run: `python -m harness.smoke configs/endpoints.toml <endpoint> > runs/pilot/smoke-<endpoint>.json`.
 - [ ] Confirm the report includes input, output, cached and reasoning tokens. `check` counts results where they are missing.
 - [ ] Run the live test: `HARNESS_ENDPOINTS=configs/endpoints.toml HARNESS_ENDPOINT=<endpoint> .venv/bin/pytest -m live`.
+
+Local single pass (Oct 18), a plumbing test with no study results:
+
+- [x] Endpoint `qwen3-4b-ollama`: Qwen3-4B on Ollama with a 32k context, set up as in the README's "Local test with Ollama". It uses the `qwen3:4b-q4_K_M` tag, the original hybrid release. The plain `qwen3:4b` tag is the 2507 thinking model, and with thinking off its reasoning leaks into the answer.
+- [x] Smoke test and live test pass. Ollama reports full input counts even on cache hits (the repeat matches the first call), and it reports cached tokens. It does not report reasoning tokens, so we estimate them from the reasoning text. A fixed seed repeats. Template overhead is 16 tokens.
+- [x] `configs/local.toml` ran one question through all 12 configurations: 12 results, 0 errors, 88 calls, `check` clean. Judging, review, analysis and calibration all ran. It took about 35 minutes on an M3 MacBook Air (about 20 tokens/s), plus a minute for the judge.
+- [x] Three fixes came out of it, each with a test:
+  - The first subagent finished without searching; it read the subtask as a reading-comprehension question. Both system prompts now say the answer comes from the documents. The subagent loop also rejects a finish before any search as an invalid action (`test_finishing_before_any_search_is_invalid`).
+  - A claims report cited passages the subagent never opened, and the orchestrator answered from those citations at 80% confidence. Claims now keep only evidence IDs from seen passages, and their status comes from the search (`test_claims_keep_only_seen_evidence_and_the_search_status`).
+  - Calibrate suggested a raw cap of 0 when nothing was opened. It now skips formats with no data.
+- What the 4B model did: it planned 3 valid subtasks at N = 3, but every subagent searched once or twice and gave up without opening a document. At N = 3 one search did surface the right author. The 4B judge marked 2 "cannot determine" answers correct by copying the correct answer as the extracted one, which shows why the hand check matters.
 
 ### A4 Clue extraction: Code done, needs a run
 

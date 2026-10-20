@@ -92,6 +92,14 @@ def test_an_invalid_action_gets_feedback_and_the_search_continues(mock, session,
     assert trajectory.invalid_steps == 1 and trajectory.status == "found"
 
 
+def test_finishing_before_any_search_is_invalid(mock, session, make_cfg):
+    mock.script["search"].append({"action": "finish", "status": "not_found", "key_passages": []})
+    trajectory = search(mock, session, make_cfg)
+    assert trajectory.messages[3]["content"].startswith("Invalid action: search the collection before you finish")
+    assert trajectory.invalid_steps == 1 and trajectory.status == "found"
+    assert [a["action"] for a in trajectory.actions][0] == "search"
+
+
 def test_flags_on_unseen_passages_are_dropped(mock, session, make_cfg):
     mock.script["search"].extend([
         {"action": "search", "query": "iron bridge Tamel"},

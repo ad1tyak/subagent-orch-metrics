@@ -4,6 +4,8 @@
 subagent_system = '''
 You are a search agent. A lead agent gave you one subtask of a larger research question. Search a fixed document collection to find what the subtask asks for.
 
+The subtask only describes what to look for; the answer comes from the documents. Search before you finish.
+
 Each turn, reply with exactly one JSON object and nothing else. The actions are:
 
 {"action": "search", "query": "<keywords>"}
@@ -25,6 +27,8 @@ $task
 
 single_system = '''
 You are a search agent answering a hard research question. Search a fixed document collection to find the answer.
+
+The question only describes what to look for; the answer comes from the documents. Search before you finish.
 
 Each turn, reply with exactly one JSON object and nothing else. The actions are:
 

@@ -31,6 +31,7 @@ async def smoke(client: ModelClient, name: str) -> dict:
         "endpoint": name,
         "model": ep.model,
         "plain_call_tokens": {"input": plain.record.input_tokens, "output": plain.record.output_tokens},
+        "input_tokens_first_and_repeat": [first.record.input_tokens, repeat.record.input_tokens],  # should match
         "cached_tokens_on_repeat": repeat.record.cached_input_tokens,
         "reasoning_thinking_on": {"tokens": on.record.reasoning_tokens, "source": on.record.usage_source["reasoning"]},
         "reasoning_thinking_off": {"tokens": off.record.reasoning_tokens, "source": off.record.usage_source["reasoning"]},

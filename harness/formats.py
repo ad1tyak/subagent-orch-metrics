@@ -95,6 +95,9 @@ async def make_report(fmt: str, trajectory: Trajectory, budget: int, tokenizer: 
         if claims is None:
             valid = False
         else:
+            for claim in claims["claims"]:
+                claim["evidence"] = [pid for pid in claim["evidence"] if pid in trajectory.seen]
+            claims["status"] = trajectory.status
             content = json.dumps(claims, ensure_ascii=False)
             while claims["claims"] and tokens.count(tokenizer, content) > budget:
                 claims["claims"].pop()

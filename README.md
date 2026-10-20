@@ -106,3 +106,37 @@ To set return caps (task C6), compare the released runs with a pilot run. This p
 ```sh
 .venv/bin/python -m harness.calibrate runs/pilot
 ```
+
+## Local test with Ollama
+
+A laptop can run the whole pipeline end to end with a small local model, to check the plumbing before spending money on real runs. The results are not part of the study, because a 4B model is far weaker than the study's models. On a 16 GB Mac, the harness takes about 5 GB and the model about 5.5 GB.
+
+1. Install [Ollama](https://ollama.com), then build Qwen3-4B with a 32k context. Ollama gives machines under 24 GB a 4k context and cuts longer prompts without warning:
+
+   ```sh
+   ollama pull qwen3:4b-q4_K_M      # the original hybrid release; the plain qwen3:4b tag cannot turn thinking off
+   ollama create qwen3-4b-32k -f configs/qwen3-4b-32k.Modelfile
+   ```
+
+2. Set the server to hold one request at a time with a smaller context cache, then restart the Ollama app:
+
+   ```sh
+   launchctl setenv OLLAMA_FLASH_ATTENTION 1
+   launchctl setenv OLLAMA_KV_CACHE_TYPE q8_0
+   launchctl setenv OLLAMA_NUM_PARALLEL 1
+   ```
+
+   After the first request, `ollama ps` should show CONTEXT 32768 and 100% GPU. `launchctl setenv` lasts until the next reboot.
+
+3. Run one question through every configuration with the `qwen3-4b-ollama` endpoint. Clues go to a separate file, so the test model's clues never mix with the real ones:
+
+   ```sh
+   .venv/bin/python -m harness.smoke configs/endpoints.toml qwen3-4b-ollama
+   .venv/bin/python -m harness.clues configs/endpoints.toml qwen3-4b-ollama --limit 1 --review 1 --out data/local/clues.json
+   caffeinate -is .venv/bin/python -m harness.run configs/local.toml      # caffeinate keeps the Mac awake
+   .venv/bin/python -m harness.check runs/local
+   .venv/bin/python -m harness.grade judge runs/local configs/endpoints.toml qwen3-4b-ollama
+   .venv/bin/python -m harness.analyze runs/local
+   ```
+
+   On an M3 MacBook Air the run takes about 35 minutes and the judge about a minute. Expect the 4B model to search once or twice and give up, and expect its judgments to be unreliable (it sometimes copies the correct answer as the extracted one). That is fine: the test checks that every stage runs and records its tokens, not accuracy.

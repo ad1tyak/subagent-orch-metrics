@@ -79,6 +79,14 @@ def test_claims_valid_json_is_compacted_and_cited(mock, make_cfg, trajectory):
     assert r.delivered_docids == ["d01", "d07"]
 
 
+def test_claims_keep_only_seen_evidence_and_the_search_status(mock, make_cfg, trajectory):
+    mock.script["claims"].append({"searched": [], "status": "not_found", "claims": [
+        {"claim": "The code is ZEBRA-42", "evidence": ["d01#p0", "d99#p3"]}]})
+    r = report(mock, make_cfg, "claims", trajectory, 800)
+    content = json.loads(r.text.split("\n", 2)[2].rsplit("\n", 1)[0])
+    assert content["claims"][0]["evidence"] == ["d01#p0"] and content["status"] == "found"
+
+
 def test_claims_are_dropped_from_the_end_to_fit(mock, make_cfg, trajectory):
     claims = [{"claim": f"fact number {i} " + "word " * 10, "evidence": [f"d01#p{i % 2}"]} for i in range(20)]
     mock.script["claims"].append({"searched": [], "claims": claims, "status": "found"})

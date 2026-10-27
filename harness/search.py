@@ -103,15 +103,26 @@ class MemoryIndex:
 
 
 class PyseriniIndex:
-    """The official BrowseComp-Plus BM25 index (pip install '.[bm25]'; needs Java 21)."""
+    """The official BrowseComp-Plus BM25Searcher on the released Lucene index (needs Java 21)."""
 
     def __init__(self, index_dir: str):
-        from pyserini.search.lucene import LuceneSearcher
+        from types import SimpleNamespace
 
-        self.searcher = LuceneSearcher(index_dir)
+        from .bcp_searchers.bm25_searcher import BM25Searcher
+
+        self.searcher = BM25Searcher(SimpleNamespace(index_path=index_dir))
+
+    def hits(self, query: str, k: int) -> list[dict]:
+        """Their search tool: docid, score, and the index document text."""
+        return self.searcher.search(query, k)
 
     def search(self, query: str, k: int) -> list[str]:
-        return [hit.docid for hit in self.searcher.search(query, k)]
+        return [hit["docid"] for hit in self.hits(query, k)]
+
+    def document(self, docid: str) -> str | None:
+        """Their get_document tool."""
+        found = self.searcher.get_document(docid)
+        return None if found is None else found["text"]
 
 
 class SearchSession:
@@ -125,21 +136,27 @@ class SearchSession:
         self.seen: dict[str, str] = {}
 
     def search(self, query: str) -> str:
-        hits = [docid for docid in self.index.search(query, self.k) if docid in self.corpus.docs]
-        if not hits:
+        if hasattr(self.index, "hits"):
+            found = [hit for hit in self.index.hits(query, self.k) if hit["docid"] in self.corpus.docs]
+            rows = [(hit["docid"], hit["text"]) for hit in found]
+        else:
+            rows = [(docid, " ".join(self.corpus.text(docid).split()))
+                    for docid in self.index.search(query, self.k) if docid in self.corpus.docs]
+        if not rows:
             return "No documents matched."
         results = []
-        for rank, docid in enumerate(hits, 1):
+        for rank, (docid, text) in enumerate(rows, 1):
             if docid not in self.retrieved:
                 self.retrieved.append(docid)
-            snippet = tokens.truncate(self.tokenizer, " ".join(self.corpus.text(docid).split()), self.snippet_tokens)
+            snippet = tokens.truncate(self.tokenizer, text, self.snippet_tokens)
             results.append(f"{rank}. [{docid}] {self.corpus.title(docid)}\n{snippet}")
         return "\n\n".join(results)
 
     def open(self, docid: str, offset: int = 0) -> str:
         if docid not in self.corpus.docs:
             raise ValueError(f"no document has docid {docid}")
-        passages = self.corpus.passages(docid)
+        text = self.index.document(docid) if hasattr(self.index, "document") else None
+        passages = split_passages(text) if text is not None else self.corpus.passages(docid)
         if not passages:
             return f"[{docid}] {self.corpus.title(docid)}\n\n(empty document)"
         if not 0 <= offset < len(passages):

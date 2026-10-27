@@ -1,7 +1,8 @@
-# Local single pass: one question through every configuration with Qwen3-4B in Ollama, to check the plumbing.
-# Not part of the study. Clues come from: python -m harness.clues configs/endpoints.toml qwen3-4b-ollama
+# Local single pass: one question through every configuration with Qwen3.5-27B on OpenRouter.
+# Not part of the study. Load the key first: set -a && source configs/.env && set +a
+# Clues: python -m harness.clues configs/endpoints.toml qwen35-27b-hosted
 #   --limit 1 --review 1 --out data/local/clues.json   (kept apart from the real data/clues.json)
-name = "local"
+name = "local-openrouter"
 endpoints = "configs/endpoints.toml"
 questions = "data/questions.jsonl"
 clues = "data/local/clues.json"
@@ -16,9 +17,9 @@ seeds = [0]
 max_questions_in_flight = 1
 
 [roles]
-orchestrator = "qwen3-4b-ollama"
-subagent = "qwen3-4b-ollama"
-single = "qwen3-4b-ollama"
+orchestrator = "qwen35-27b-hosted"
+subagent = "qwen35-27b-hosted"
+single = "qwen35-27b-hosted"
 
 [budgets]                            # same as pilot.toml
 short = 200

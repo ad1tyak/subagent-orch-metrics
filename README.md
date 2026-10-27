@@ -7,7 +7,8 @@ How the format of a subagent's report to its orchestrator changes token cost and
 | `proposal/` | The LaTeX project proposal (see `proposal/README.md` to build it) |
 | `docs/tasks.md` | The task plan |
 | `docs/checklist.md` | Status of every task: what is done, how to verify it, what comes next |
-| `docs/harness-design.md` | Design of the agent harness: steps, specs and tests |
+| `docs/architecture.md` | Short harness design: library, one question, choices, metrics |
+| `docs/harness-design.md` | Full harness spec: steps, records and tests |
 | `harness/` | The harness: one question through plan, search, return, decide, with token counts per call |
 | `configs/` | Model endpoints and run configs |
 | `tests/` | Offline tests against a mock OpenAI-compatible server and a tiny corpus |

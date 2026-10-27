@@ -17,3 +17,4 @@ proposal/*.fls
 proposal/*.fdb_latexmk
 proposal/*.synctex.gz
 proposal/*.blg
+**/.env

@@ -1,5 +1,7 @@
 # Agent Harness Design
 
+Short version: [`architecture.md`](architecture.md). This file is the spec.
+
 Oct 18, 2026 · Covers tasks B1 to B11 and the harness side of C1 to C7 in `tasks.md` · Updated after the first end-to-end run on a local model
 
 ## 1. What the harness does
@@ -131,7 +133,8 @@ harness/
   llm.py           # ModelClient: requests, usage normalization, retries, concurrency
   tokens.py        # load a tokenizer by name; count and truncate
   parsing.py       # the first JSON object in a reply; confidence values
-  search.py        # corpus, passages, BM25 (Pyserini or in memory), per-subagent SearchSession
+  search.py        # corpus, passages, BrowseComp-Plus BM25Searcher or in-memory BM25, SearchSession
+  bcp_searchers/   # their BM25Searcher and BaseSearcher, copied from searcher/searchers
   planner.py
   subagent.py      # search loop and action parsing
   formats.py       # the six return formats and the report wrapper
@@ -226,7 +229,7 @@ A question's subagents run together in an `asyncio.TaskGroup`, so if one fails t
 
 ### 4.3 Search tool (B3)
 
-The corpus is the BrowseComp-Plus document set with the official BM25 index, loaded through Pyserini when the config sets `index`. Without it, an in-memory BM25 with Pyserini's default parameters (k1 = 0.9, b = 0.4) scores every document, which is enough for the tests and small corpora. The document texts are loaded into memory either way, because `open` reads passages from them. Search settings (k, snippet length) start from the BrowseComp-Plus reference searcher so the single-agent baseline in E2 can be compared with published numbers.
+The corpus is the BrowseComp-Plus document set. When the config sets `index`, search and document reads go through their `BM25Searcher` (`harness/bcp_searchers/`, the class in `searcher/searchers/bm25_searcher.py`): `search` returns the Lucene hits, and `open` pages the text from their `get_document`. Snippets are that hit text cut to `snippet_tokens` with the run's tokenizer. Their MCP server cuts the same field with the Qwen3-0.6B tokenizer instead. Without an index, an in-memory BM25 with Pyserini's default parameters (k1 = 0.9, b = 0.4) scores the corpus, which is enough for the tests. The corpus stays in memory either way, for titles and for the in-memory path.
 
 **Passages.** Each document is split once at load time on blank lines. Short paragraphs are merged and long ones split at sentence ends, so each passage is roughly 80 to 250 words. IDs are `<docid>#p<k>` and stay the same for a given corpus.
 
